@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "../submit-button";
+import { RefreshCw } from "lucide-react";
 import { drawCaptcha, generateCaptchaText } from "@/utils/captcha-generator";
+import { useCooldown } from "@/hooks/useCooldown";
 
 interface TextImageCaptchaProps {
   onVerify?: (success: boolean) => void;
@@ -15,13 +17,17 @@ const TextImageCaptcha: React.FC<TextImageCaptchaProps> = ({ onVerify }) => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [message, setMessage] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null!);
+  const { isInCooldown, remainingSeconds, startCooldown } = useCooldown(10);
 
   const refreshCaptcha = () => {
+    if (isInCooldown) return;
+    
     const newText = generateCaptchaText();
     setCaptchaText(newText);
     setUserInput("");
     setIsCorrect(null);
     setMessage("");
+    startCooldown();
   };
 
   useEffect(() => {
@@ -62,7 +68,7 @@ const TextImageCaptcha: React.FC<TextImageCaptchaProps> = ({ onVerify }) => {
             <Input id="email" name="email" type="email" required />
           </div>
 
-          <div className="border p-4 rounded-md bg-gray-50">
+          <div className="border p-4 rounded-md bg-gray-50 relative">
             <p className="text-base font-medium mb-2">
               Type the characters you see in the image:
             </p>
@@ -73,6 +79,16 @@ const TextImageCaptcha: React.FC<TextImageCaptchaProps> = ({ onVerify }) => {
                 width={200}
                 height={70}
               />
+              <button
+                type="button"
+                onClick={refreshCaptcha}
+                disabled={isInCooldown}
+                className="absolute right-4 top-4 p-2 border rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                title={isInCooldown ? `Wait ${remainingSeconds}s` : "New Captcha"}
+              >
+                <RefreshCw className={`h-5 w-5 ${isInCooldown ? 'animate-spin opacity-50' : ''}`} />
+                {isInCooldown && <span className="ml-1 text-xs">{remainingSeconds}s</span>}
+              </button>
             </div>
 
             <div className="space-y-2">
@@ -102,13 +118,6 @@ const TextImageCaptcha: React.FC<TextImageCaptchaProps> = ({ onVerify }) => {
 
           <div className="flex gap-3">
             <SubmitButton />
-            <button
-              type="button"
-              onClick={refreshCaptcha}
-              className="px-4 py-2 border rounded-md hover:bg-gray-100"
-            >
-              New Captcha
-            </button>
           </div>
         </form>
       </CardContent>

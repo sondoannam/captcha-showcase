@@ -76,7 +76,7 @@ export const drawCaptcha = (
     ctx.fill();
   }
 
-  // Add lines for confusion
+  // Add lines for confusion with increased thickness
   for (let i = 0; i < 5; i++) {
     ctx.strokeStyle = `rgba(${Math.random() * 255},${Math.random() * 255},${
       Math.random() * 255
@@ -84,25 +84,36 @@ export const drawCaptcha = (
     ctx.beginPath();
     ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
     ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1 + Math.random(); // Thicker lines (1-2px)
     ctx.stroke();
   }
 
   // Draw text
   ctx.font = "bold 30px sans-serif";
-  ctx.fillStyle = "#333";
   ctx.textBaseline = "middle";
 
-  // Draw each character with slight variations
-  const textWidth = ctx.measureText(text).width;
-  const startX = (canvas.width - textWidth) / 2;
-
+  // Calculate total width needed for all characters with some spacing
+  const avgCharWidth = ctx.measureText("W").width; // Use a wide character as reference
+  const totalSpacingNeeded = avgCharWidth * text.length * 0.8; // Allow for some overlap
+  
+  // Calculate starting position to center the text
+  const startX = (canvas.width - totalSpacingNeeded) / 2;
+  
+  // Individual character spacing (pixels between characters)
+  const charSpacing = totalSpacingNeeded / text.length;
+  
+  // Draw each character with appropriate spacing
   for (let i = 0; i < text.length; i++) {
-    const charWidth = ctx.measureText(text[i]).width;
-    const x = startX + i * charWidth + i * 3; // spacing between chars
+    // Use different colors for adjacent characters
+    ctx.fillStyle = `rgb(${30 + Math.random() * 100}, ${30 + Math.random() * 100}, ${30 + Math.random() * 100})`;
+    
+    // Calculate position with jitter
+    const x = startX + i * charSpacing + (Math.random() * 4 - 2);
     const y = canvas.height / 2 + (Math.random() * 10 - 5);
-    const rotation = Math.random() * 0.4 - 0.2; // slight rotation
-
+    
+    // Random rotation - sometimes more tilted
+    const rotation = (Math.random() * 0.5 - 0.25) * (Math.random() > 0.7 ? 1.5 : 1);
+    
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
